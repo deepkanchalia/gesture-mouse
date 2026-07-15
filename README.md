@@ -3,6 +3,8 @@
 Control your real Mac cursor with hand gestures via the webcam. No extra
 hardware — just your hand.
 
+**Website:** https://deepkanchalia.github.io/gesture-mouse/
+
 ## Gestures
 
 - **Move your hand** → cursor follows (anchored to your knuckle)
