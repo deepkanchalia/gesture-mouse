@@ -1,7 +1,9 @@
-# Gesture Mouse
+# Hands-off
 
 Control your real Mac cursor with hand gestures via the webcam. No extra
-hardware — just your hand.
+hardware — just your hand. (Repo name: `gesture-mouse`.)
+
+Made by Deepk Anchlia · Rethink Systems.
 
 **Website:** https://deepkanchalia.github.io/gesture-mouse/
 

@@ -43,6 +43,9 @@ echo "Using $PY ($($PY --version))"
 "$PY" -m venv venv
 ./venv/bin/pip install --upgrade pip --quiet
 ./venv/bin/pip install -r requirements.txt
+# Security: mediapipe's metadata caps protobuf <5, but it runs fine on 5.x.
+# 4.25.9 has a known CVE (PYSEC-2026-1805); force the patched version.
+./venv/bin/pip install --quiet "protobuf==5.29.6" 2>/dev/null || true
 
 echo ""
 echo "✅ Installed."
