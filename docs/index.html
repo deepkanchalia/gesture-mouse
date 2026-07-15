@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gesture Mouse — control your Mac with your hand</title>
 <meta name="description" content="Control your real Mac cursor with hand gestures via the webcam. No hardware, just your hand. Free and open source.">
+<meta property="og:title" content="Gesture Mouse — control your Mac with your hand">
+<meta property="og:description" content="Move, open, and drag with hand gestures through your webcam. No hardware. Free, open source, 100% local.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://deepkanchalia.github.io/gesture-mouse/">
+<!-- og:image: add a frame from the demo GIF when it lands -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Gesture Mouse — control your Mac with your hand">
+<meta name="twitter:description" content="Move, open, and drag with hand gestures through your webcam. No hardware. Free, open source, 100% local.">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
@@ -47,6 +55,17 @@
     border: 1px solid var(--border); border-radius: 100px;
     padding: 5px 14px;
   }
+
+  .demo {
+    margin: 56px auto 0;
+    aspect-ratio: 16 / 9;
+    background: var(--panel); border: 1px dashed var(--border);
+    border-radius: 16px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 8px;
+    color: var(--muted); font-size: 15px;
+  }
+  .demo .play { font-size: 34px; opacity: .6; }
 
   section { padding: 48px 0; border-top: 1px solid var(--border); }
   h2 {
@@ -104,14 +123,49 @@
   }
   .note strong { color: var(--text); }
 
+  details {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; margin-bottom: 12px;
+    padding: 0 20px;
+  }
+  summary {
+    cursor: pointer; font-weight: 600; font-size: 15.5px;
+    padding: 16px 0; list-style: none;
+    display: flex; align-items: center; gap: 10px;
+  }
+  summary::before { content: "+"; color: var(--accent); font-weight: 700; width: 14px; }
+  details[open] summary::before { content: "–"; }
+  details p {
+    color: var(--muted); font-size: 14.5px; padding: 0 0 16px 24px;
+  }
+  details p strong { color: var(--text); }
+  details code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 13px; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 5px; padding: 2px 7px;
+  }
+
+  .links { display: grid; gap: 12px; }
+  .linkrow {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px 20px;
+    display: flex; align-items: baseline; gap: 14px;
+    text-decoration: none; color: var(--text);
+  }
+  .linkrow:hover { border-color: var(--accent); }
+  .linkrow b { font-weight: 600; }
+  .linkrow span { color: var(--muted); font-size: 14px; }
+  .linkrow .arrow { margin-left: auto; color: var(--accent); }
+
   footer {
     padding: 56px 0 72px; border-top: 1px solid var(--border);
     text-align: center; color: var(--muted); font-size: 14px;
   }
   footer a { color: var(--text); text-decoration: none; border-bottom: 1px solid var(--border); }
   footer a:hover { border-color: var(--accent); }
+  .social { display: flex; gap: 12px; justify-content: center; margin: 0 0 24px; }
   .gh {
-    display: inline-block; margin-bottom: 20px;
+    display: inline-block;
     background: var(--text); color: var(--bg) !important;
     font-weight: 600; font-size: 15px;
     padding: 12px 28px; border-radius: 100px; border: none !important;
@@ -128,8 +182,13 @@
     <p class="sub">Point, open, drag — through your webcam. No hardware, no mouse. Free and open source.</p>
     <div class="badges">
       <span class="badge">macOS</span>
-      <span class="badge">Open source</span>
+      <span class="badge">Open source · MIT</span>
       <span class="badge">Runs 100% on your Mac — nothing leaves it</span>
+    </div>
+    <!-- Demo GIF slot: replace this div with <img src="demo.gif" ...> when recorded -->
+    <div class="demo">
+      <span class="play">▶</span>
+      <span>20-second demo — coming this week</span>
     </div>
   </header>
 
@@ -184,9 +243,55 @@
     </div>
   </section>
 
+  <section>
+    <h2>Troubleshooting</h2>
+
+    <details>
+      <summary>The cursor doesn't move</summary>
+      <p>That's the Accessibility permission. Go to <strong>System Settings → Privacy &amp; Security → Accessibility</strong>, add your Terminal app and switch it on, then quit and re-run. macOS blocks mouse control silently until this is granted.</p>
+    </details>
+
+    <details>
+      <summary>The camera shows my iPhone instead of my webcam</summary>
+      <p>macOS Continuity Camera hijacked the feed (you may see "Lock iPhone To Resume"). Fix: on your iPhone, <strong>Settings → General → AirPlay &amp; Continuity → Continuity Camera OFF</strong>. Re-run the app.</p>
+    </details>
+
+    <details>
+      <summary>"Python 3.11 or 3.12 not found"</summary>
+      <p>The hand-tracking library (MediaPipe) doesn't support newer Pythons yet. Install it with <code>brew install python@3.11</code>, then run the install command again. No Homebrew? Get it at brew.sh first.</p>
+    </details>
+
+    <details>
+      <summary>Is this safe to run?</summary>
+      <p>Yes. It runs <strong>100% locally</strong> — there is zero network code in the app, no accounts, no analytics. It's MIT-licensed open source, small enough to read in one sitting: <a href="https://github.com/deepkanchalia/gesture-mouse" style="color:var(--accent)">read the source</a>.</p>
+    </details>
+
+    <details>
+      <summary>How do I stop it?</summary>
+      <p>Three ways: press <strong>ESC</strong> in the camera window, take your hand out of the frame (cursor freezes instantly), or just close the camera window. Nothing gets clicked without the 2-second arm step, so it can't run away from you.</p>
+    </details>
+
+    <details>
+      <summary>Gestures misfire on my hand</summary>
+      <p>Every hand is different. Run <code>./venv/bin/python pinch_debug.py</code> — it logs your hand's real numbers to <code>pinch_log.txt</code> so you can tune the thresholds in <code>main.py</code> to data, not guesswork. Tuning knobs are documented in the README.</p>
+    </details>
+  </section>
+
+  <section>
+    <h2>Everything</h2>
+    <div class="links">
+      <a class="linkrow" href="https://github.com/deepkanchalia/gesture-mouse"><b>GitHub repo</b> <span>source code + README</span><span class="arrow">→</span></a>
+      <a class="linkrow" href="https://raw.githubusercontent.com/deepkanchalia/gesture-mouse/main/install.sh"><b>install.sh</b> <span>read the installer before you run it</span><span class="arrow">→</span></a>
+      <a class="linkrow" href="https://github.com/deepkanchalia/gesture-mouse/issues"><b>Report a problem</b> <span>GitHub issues</span><span class="arrow">→</span></a>
+      <a class="linkrow" href="https://github.com/deepkanchalia/gesture-mouse/blob/main/LICENSE"><b>License</b> <span>MIT — use it, fork it, break it</span><span class="arrow">→</span></a>
+    </div>
+  </section>
+
   <footer>
-    <a class="gh" href="https://github.com/deepkanchalia/gesture-mouse">View on GitHub →</a>
-    <p>Built by <a href="https://github.com/deepkanchalia">Deep Kanchalia</a> · MIT licensed: use it, fork it, break it.</p>
+    <div class="social">
+      <a class="gh" href="https://github.com/deepkanchalia/gesture-mouse">View on GitHub →</a>
+    </div>
+    <p>Built by <a href="https://github.com/deepkanchalia">Deepk Anchlia</a></p>
   </footer>
 
 </div>
