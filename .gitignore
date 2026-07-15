@@ -1,0 +1,6 @@
+venv/
+__pycache__/
+.state
+pinch_log.txt
+camera_pick.py
+preview_test.py
