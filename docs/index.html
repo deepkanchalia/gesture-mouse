@@ -82,8 +82,8 @@
     background: var(--panel); border: 1px solid var(--border);
     border-radius: 14px; padding: 14px 16px; margin-top: 12px;
     display: flex; align-items: center; gap: 12px;
-    overflow-x: auto;
   }
+  .codebox .scroll { flex: 1; min-width: 0; overflow-x: auto; }
   .codebox code {
     font-family: ui-monospace, "SF Mono", Menlo, monospace;
     font-size: 13px; color: var(--text); white-space: nowrap;
@@ -192,7 +192,7 @@
         <h3>Paste one line in Terminal</h3>
         <p>Open Terminal (press <strong>⌘ + Space</strong>, type "Terminal") and paste:</p>
         <div class="codebox">
-          <code id="cmd">curl -fsSL https://raw.githubusercontent.com/deepkanchalia/gesture-mouse/main/install.sh | bash</code>
+          <div class="scroll"><code id="cmd">curl -fsSL https://raw.githubusercontent.com/deepkanchalia/gesture-mouse/main/install.sh | bash</code></div>
           <button class="copy" onclick="copyCmd(this,'cmd')">Copy</button>
         </div>
         <p style="margin-top:10px; font-size:13.5px;">It downloads the app and sets everything up. Needs Python 3.11 — if you don't have it, the installer tells you the exact command to get it.</p>
@@ -212,7 +212,7 @@
       <div style="min-width:0">
         <h3>Run it</h3>
         <div class="codebox">
-          <code id="run">cd ~/gesture-mouse && ./venv/bin/python main.py</code>
+          <div class="scroll"><code id="run">cd ~/gesture-mouse && ./venv/bin/python main.py</code></div>
           <button class="copy" onclick="copyCmd(this,'run')">Copy</button>
         </div>
         <p style="margin-top:10px; font-size:13.5px;">A camera window opens with live coaching text. Raise your hand — the cursor follows.</p>
