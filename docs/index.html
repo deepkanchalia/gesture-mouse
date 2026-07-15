@@ -224,13 +224,12 @@
     <h2>the gestures</h2>
     <div class="gestures">
       <div class="gesture"><span class="g">👋</span><div><b>Move your hand</b> — <span class="desc">cursor follows</span></div></div>
-      <div class="gesture"><span class="g">🎯</span><div><b>Hold still 2s on a target</b> — <span class="desc">locks on (armed). Nothing ever clicks without this.</span></div></div>
-      <div class="gesture"><span class="g">🤏</span><div><b>Flick finger + thumb 3×</b> — <span class="desc">opens it (double-click)</span></div></div>
-      <div class="gesture"><span class="g">✊</span><div><b>Close your hand 2s</b> — <span class="desc">picks it up · open your hand to drop</span></div></div>
+      <div class="gesture"><span class="g">🤏</span><div><b>Point + pinch twice</b> — <span class="desc">opens it (double-click). The cursor freezes on your target the moment you pinch.</span></div></div>
+      <div class="gesture"><span class="g">✊</span><div><b>Hold still 2s, then close your hand 2s</b> — <span class="desc">picks it up · open your hand to drop</span></div></div>
       <div class="gesture"><span class="g">🛑</span><div><b>Hand out of frame</b> — <span class="desc">cursor freezes. ESC quits.</span></div></div>
     </div>
     <div class="note">
-      <strong>Privacy:</strong> the camera feed never leaves your Mac. The app has zero network code — no internet, no accounts, no data collected. It's a few hundred lines of Python you can <a href="https://github.com/deepkanchalia/gesture-mouse">read yourself</a>.
+      <strong>Privacy:</strong> the camera feed never leaves your Mac. The app has zero network code — no internet, no accounts, no data collected. It's a few hundred lines of Python you can read yourself.
     </div>
   </section>
 
@@ -254,12 +253,12 @@
 
     <details>
       <summary>Is this safe to run?</summary>
-      <p>Yes. It runs <strong>100% locally</strong> — zero network code in the app, no accounts, no analytics. Dependencies are pinned to exact audited versions. It's MIT-licensed open source, small enough to read in one sitting: <a href="https://github.com/deepkanchalia/gesture-mouse">read the source</a>.</p>
+      <p>Yes. It runs <strong>100% locally</strong> — zero network code in the app, no accounts, no analytics. Dependencies are pinned to exact audited versions. It's MIT-licensed open source, small enough to read in one sitting.</p>
     </details>
 
     <details>
       <summary>How do I stop it?</summary>
-      <p>Three ways: press <strong>ESC</strong> in the camera window, take your hand out of the frame (cursor freezes instantly), or just close the camera window. Nothing gets clicked without the 2-second arm step, so it can't run away from you.</p>
+      <p>Three ways: press <strong>ESC</strong> in the camera window, take your hand out of the frame (cursor freezes instantly), or just close the camera window. A click needs two deliberate pinches, so it can't run away from you.</p>
     </details>
 
     <details>
@@ -268,25 +267,12 @@
     </details>
   </section>
 
-  <section>
-    <h2>everything</h2>
-    <div class="links">
-      <a class="linkrow" href="https://github.com/deepkanchalia/gesture-mouse"><b>GitHub repo</b> <span>source code + README</span><span class="arrow">→</span></a>
-      <a class="linkrow" href="https://raw.githubusercontent.com/deepkanchalia/gesture-mouse/main/install.sh"><b>install.sh</b> <span>read the installer before you run it</span><span class="arrow">→</span></a>
-      <a class="linkrow" href="https://github.com/deepkanchalia/gesture-mouse/issues"><b>Report a problem</b> <span>GitHub issues</span><span class="arrow">→</span></a>
-      <a class="linkrow" href="https://github.com/deepkanchalia/gesture-mouse/blob/main/LICENSE"><b>License</b> <span>MIT — use it, fork it, break it</span><span class="arrow">→</span></a>
-    </div>
-  </section>
-
   <footer>
-    <a class="gh" href="https://github.com/deepkanchalia/gesture-mouse">View on GitHub →</a>
     <p class="made">Made by <b><a href="https://www.linkedin.com/in/deepkanchalia/">Deepk Anchlia</a></b> · <b>Rethink Systems</b></p>
     <p>
       <a href="https://www.linkedin.com/in/deepkanchalia/">LinkedIn</a>
       &nbsp;·&nbsp;
       <a href="https://www.instagram.com/secondprinciples/">Instagram</a>
-      &nbsp;·&nbsp;
-      <a href="https://github.com/deepkanchalia">GitHub</a>
     </p>
   </footer>
 

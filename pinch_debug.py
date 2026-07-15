@@ -1,7 +1,8 @@
-"""Pinch diagnostic — NO mouse control.
+"""Pinch debugger — mirrors main.py v6 double-pinch logic and logs WHY
+each attempt succeeded or failed to pinch_log.txt.
 
-Runs the SAME decision logic as main.py and logs every event to
-pinch_log.txt so we can see why clicks fail. ESC/q to quit.
+Run it, do ~10 deliberate double-pinches at the camera, press ESC.
+Then read pinch_log.txt: every event says what the app saw.
 """
 
 import time
@@ -10,112 +11,102 @@ import cv2
 
 from hand_tracker import HandTracker
 
-# Same values as main.py
+# Same values as main.py — keep in sync.
 PINCH_CLOSE = 0.35
 PINCH_OPEN = 0.55
-DOUBLE_PINCH_WINDOW = 1.0
-GRAB_MAX_FINGERS_UP = 1
+OPEN_TAPS = 2
+TAPS_WINDOW_SEC = 2.5
 
 LOG = open("pinch_log.txt", "w")
 
 
 def log(msg):
-    line = f"{time.time():.2f} {msg}"
+    line = f"{time.time():.3f} {msg}"
     print(line, flush=True)
     LOG.write(line + "\n")
-    LOG.flush()
 
 
 def main():
     cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
-        print("camera failed")
-        return
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 960)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 540)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
     tracker = HandTracker()
 
-    grabbing = False
     pinch_closed = False
-    last_tap_time = 0.0
-    last_sample = 0.0
-    verdict = ""
+    tap_times = []
+    close_t = 0.0
+    min_pinch = 99.0     # lowest value inside current close
+    max_open = 0.0       # highest value since last close
+    frames = 0
+    hand_frames = 0
+    t0 = time.time()
+    opens = 0
+
+    log(f"START thresholds close<{PINCH_CLOSE} open>{PINCH_OPEN} "
+        f"taps={OPEN_TAPS} window={TAPS_WINDOW_SEC}s")
 
     while True:
         ok, frame = cap.read()
         if not ok:
             continue
+        frames += 1
         frame = cv2.flip(frame, 1)
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         hand, mp_result = tracker.process(rgb)
         tracker.draw(frame, mp_result)
-        h, w = frame.shape[:2]
+        now = time.time()
 
-        if hand is None:
-            cv2.putText(frame, "NO HAND", (20, 100),
-                        cv2.FONT_HERSHEY_SIMPLEX, 2.0, (0, 0, 255), 4)
-            grabbing = False
-            pinch_closed = False
-        else:
-            p = hand.pinch_distance
-            ups = hand.fingers_up()
-            n_up = sum(ups)
-            now = time.time()
+        state = "NO HAND"
+        if hand is not None:
+            hand_frames += 1
+            v = hand.pinch_distance
+            state = f"pinch {v:.2f}  taps {len(tap_times)}"
 
-            # --- exact main.py logic, but logging instead of clicking ---
-            if (not grabbing and p < PINCH_CLOSE
-                    and n_up <= GRAB_MAX_FINGERS_UP):
-                grabbing = True
-                pinch_closed = False
-                last_tap_time = 0.0
-                verdict = "GRAB (drag)"
-                log(f"GRAB start  pinch={p:.2f} n_up={n_up} fingers={ups}")
-            elif grabbing and p > PINCH_OPEN:
-                grabbing = False
-                verdict = ""
-                log(f"GRAB end    pinch={p:.2f} n_up={n_up}")
-
-            if not grabbing:
-                if (not pinch_closed and p < PINCH_CLOSE
-                        and n_up > GRAB_MAX_FINGERS_UP):
-                    pinch_closed = True
-                    gap = now - last_tap_time
-                    if gap < DOUBLE_PINCH_WINDOW:
-                        verdict = "CLICK!"
-                        log(f"CLICK       gap={gap:.2f}s pinch={p:.2f} "
-                            f"n_up={n_up} fingers={ups}")
-                        last_tap_time = 0.0
-                    else:
-                        verdict = "tap 1..."
-                        log(f"TAP-1       pinch={p:.2f} n_up={n_up} "
-                            f"fingers={ups}")
-                        last_tap_time = now
-                elif pinch_closed and p > PINCH_OPEN:
+            if not pinch_closed and v < PINCH_CLOSE:
+                pinch_closed = True
+                close_t = now
+                min_pinch = v
+                log(f"CLOSE  val={v:.2f}  (max open since last: {max_open:.2f})")
+                max_open = 0.0
+            elif pinch_closed:
+                min_pinch = min(min_pinch, v)
+                if v > PINCH_OPEN:
                     pinch_closed = False
-                    log(f"tap release pinch={p:.2f} n_up={n_up}")
+                    dur = now - close_t
+                    expired = [t for t in tap_times
+                               if now - t >= TAPS_WINDOW_SEC]
+                    tap_times = [t for t in tap_times
+                                 if now - t < TAPS_WINDOW_SEC]
+                    if expired:
+                        log(f"  WINDOW EXPIRED: previous tap was "
+                            f"{now - expired[-1]:.2f}s ago (limit {TAPS_WINDOW_SEC}s)")
+                    tap_times.append(now)
+                    gap = (tap_times[-1] - tap_times[-2]
+                           if len(tap_times) > 1 else 0.0)
+                    log(f"TAP {len(tap_times)}  held={dur:.2f}s  "
+                        f"min={min_pinch:.2f}  gap={gap:.2f}s")
+                    if len(tap_times) >= OPEN_TAPS:
+                        opens += 1
+                        log(f">>> OPEN #{opens} (would double-click)")
+                        tap_times = []
+            else:
+                max_open = max(max_open, v)
+        else:
+            if pinch_closed:
+                log("HAND LOST mid-pinch (tracking dropout!)")
+            pinch_closed = False
 
-            if time.time() - last_sample > 0.4:
-                last_sample = time.time()
-                log(f"sample pinch={p:.2f} n_up={n_up} fingers={ups} "
-                    f"closed={pinch_closed} grab={grabbing}")
-
-            color = (0, 0, 255) if (pinch_closed or grabbing) else (0, 255, 0)
-            cv2.putText(frame, f"pinch {p:.2f}", (20, 120),
-                        cv2.FONT_HERSHEY_SIMPLEX, 2.2, color, 4)
-            cv2.putText(frame, f"fingers up: {n_up}", (20, 190),
-                        cv2.FONT_HERSHEY_SIMPLEX, 2.2, (255, 150, 0), 4)
-            if verdict:
-                cv2.putText(frame, verdict, (20, 260),
-                            cv2.FONT_HERSHEY_SIMPLEX, 2.0, (0, 200, 255), 4)
-
-        cv2.putText(frame,
-                    "double-pinch x5 (like opening a folder)  then ESC",
-                    (20, h - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
-                    (255, 255, 255), 2)
-        cv2.imshow("Pinch debug (ESC to quit)", frame)
+        cv2.putText(frame, state, (14, 32), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.8, (0, 255, 0), 2)
+        cv2.putText(frame, f"OPENS: {opens}  (ESC = quit)", (14, 64),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 200, 255), 2)
+        cv2.imshow("Pinch Debug (ESC to quit)", frame)
         if cv2.waitKey(1) & 0xFF in (27, ord("q")):
             break
 
+    dt = time.time() - t0
+    log(f"END fps={frames / dt:.1f} hand_detected={hand_frames}/{frames} "
+        f"frames opens={opens}")
     cap.release()
     cv2.destroyAllWindows()
     LOG.close()

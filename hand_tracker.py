@@ -79,7 +79,9 @@ class HandResult:
 
 
 class HandTracker:
-    def __init__(self, detection_conf=0.7, tracking_conf=0.6):
+    def __init__(self, detection_conf=0.7, tracking_conf=0.5):
+        # tracking_conf 0.5 (was 0.6): fingers occlude each other during a
+        # pinch and the tracker dropped the hand mid-gesture (logged 8x/40s)
         self._hands = mp.solutions.hands.Hands(
             static_image_mode=False,
             max_num_hands=1,               # lock onto ONE hand

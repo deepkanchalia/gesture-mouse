@@ -1,16 +1,15 @@
 """Hand-Gesture Mouse Control — v5 (hover-arm design, all-day light).
 
 Move your hand              -> cursor follows (anchored to your knuckle)
-Hold still on a target ~2s  -> ARMED (cursor locks on the target)
-While armed:
-  flick index+thumb 3 times -> OPEN it (double-click)
+Point + pinch 2 times       -> OPEN it (double-click) — works anywhere
+Hold still on a target ~2s  -> ARMED (cursor locks on the target), then
   close hand, hold ~2s      -> PICK UP | open hand -> DROP
 Move your hand away         -> disarms, back to normal tracking
 No hand in frame            -> cursor freezes
 ESC or q (in the camera window) -> quit
 
-The cursor is FROZEN on the target while armed, so taps can't drift
-off the icon. Nothing is ever clicked without arming first.
+The cursor FREEZES the moment a pinch starts, so the double-pinch
+click lands exactly where you pointed.
 
 Ring colors: green = tracking, orange = armed / holding,
 red = carrying or click, gray = no hand.
@@ -44,9 +43,13 @@ DISARM_MOVE_PX = 150
 # Armed but idle for this long = disarm.
 ARMED_TIMEOUT_SEC = 6.0
 
-# OPEN: this many pinch flicks while armed.
-OPEN_TAPS = 3
-TAPS_WINDOW_SEC = 4.0     # all taps must land within this of the first
+# OPEN: pinch this many times, anywhere, no arming needed.
+OPEN_TAPS = 2
+TAPS_WINDOW_SEC = 2.5     # max gap between taps (logged real gaps: up to 2.34s)
+
+# The tracker loses the hand for a few frames when fingers close over
+# each other. Don't reset anything unless it's gone this long for real.
+HAND_LOST_GRACE_SEC = 0.8
 
 # PICK: hand kept closed this long (while armed) picks the target up.
 GRAB_HOLD_SEC = 2.0
@@ -97,7 +100,7 @@ def main():
         [sys.executable, os.path.join(os.path.dirname(__file__), "overlay.py")])
 
     print(f"Camera ready. Screen {mouse.screen_w}x{mouse.screen_h}.", flush=True)
-    print("hold still 2s = arm | 3 flicks = open | close hand 2s = pick, "
+    print("pinch 2x = open | hold still 2s + close hand 2s = pick, "
           "open = drop | ESC = quit", flush=True)
 
     # dwell / arm state
@@ -112,6 +115,7 @@ def main():
     # actions
     carrying = False
     click_flash_until = 0.0
+    last_seen = 0.0               # when we last saw the hand
 
     def disarm():
         nonlocal armed, tap_times, pinch_closed
@@ -145,6 +149,7 @@ def main():
             if hand is not None:
                 pinch_val = hand.pinch_distance
                 now = time.time()
+                last_seen = now
 
                 nx, ny, _ = hand.landmarks[MIDDLE_MCP]
                 sx, sy = to_screen(nx, ny, mouse)
@@ -175,9 +180,9 @@ def main():
                     held = now - close_time if pinch_closed else 0.0
 
                     if opened_now:
-                        tap_times.append(now)
                         tap_times = [t for t in tap_times
                                      if now - t < TAPS_WINDOW_SEC]
+                        tap_times.append(now)
                         if len(tap_times) >= OPEN_TAPS:
                             mouse.double_click()        # OPEN!
                             click_flash_until = now + 0.6
@@ -202,9 +207,9 @@ def main():
                         if pinch_closed and held > 0.4:
                             state = f"HOLDING {held:.1f}s / {GRAB_HOLD_SEC:.0f}s to pick"
                         elif tap_times:
-                            state = f"FLICK {len(tap_times)}/{OPEN_TAPS} to open"
+                            state = f"PINCH {len(tap_times)}/{OPEN_TAPS} to open"
                         else:
-                            state = "ARMED - 3 flicks = open, close 2s = pick"
+                            state = "ARMED - close hand 2s = pick up"
                         color, ring = (0, 200, 255), "S"
                     elif time.time() < click_flash_until:
                         state, color, ring = "OPEN!", (0, 150, 255), "C"
@@ -212,12 +217,37 @@ def main():
                         state, color, ring = "TRACKING", (0, 255, 0), "P"
 
                 else:
-                    # normal tracking + dwell detection
-                    mouse.move(sx, sy)
+                    # normal tracking. Cursor FREEZES the moment a pinch
+                    # starts (or between the two taps) so the double-pinch
+                    # click lands exactly where you pointed.
+                    tap_pending = bool(tap_times) and (now - tap_times[-1]
+                                                       < TAPS_WINDOW_SEC)
+                    if tap_pending and not pinch_closed:
+                        # moved well away after one tap = changed your mind
+                        mx, my = mouse.pos
+                        if max(abs(sx - mx), abs(sy - my)) > DISARM_MOVE_PX:
+                            tap_times = []
+                            tap_pending = False
+                    if not pinch_closed and not tap_pending:
+                        mouse.move(sx, sy)
+
+                    if opened_now:
+                        tap_times = [t for t in tap_times
+                                     if now - t < TAPS_WINDOW_SEC]
+                        tap_times.append(now)
+                        if len(tap_times) >= OPEN_TAPS:
+                            mouse.double_click()        # OPEN!
+                            click_flash_until = now + 0.6
+                            tap_times = []
+                            dwell_x, dwell_y = sx, sy
+                            dwell_start = now
+
+                    # dwell-to-arm (for pick up / drag)
                     if max(abs(sx - dwell_x), abs(sy - dwell_y)) > DWELL_RADIUS_PX:
                         dwell_x, dwell_y = sx, sy       # moved: restart dwell
                         dwell_start = now
-                    elif now - dwell_start >= ARM_HOLD_SEC and not pinch_closed:
+                    elif (now - dwell_start >= ARM_HOLD_SEC
+                            and not pinch_closed and not tap_pending):
                         armed = True                    # locked on target
                         armed_at = now
                         tap_times = []
@@ -225,10 +255,14 @@ def main():
 
                     if time.time() < click_flash_until:
                         state, color, ring = "OPEN!", (0, 150, 255), "C"
+                    elif tap_pending or pinch_closed:
+                        n = len(tap_times)
+                        state = f"PINCH {min(n, OPEN_TAPS)}/{OPEN_TAPS} to open"
+                        color, ring = (0, 200, 255), "S"
                     else:
                         still = now - dwell_start
                         if still > 0.6:
-                            state = f"HOLD STILL {still:.1f}s / {ARM_HOLD_SEC:.0f}s to arm"
+                            state = f"HOLD STILL {still:.1f}s / {ARM_HOLD_SEC:.0f}s to pick up"
                             color, ring = (0, 255, 0), "P"
                         else:
                             state, color, ring = "TRACKING", (0, 255, 0), "P"
@@ -237,12 +271,15 @@ def main():
                 cv2.circle(frame, (int(nx * w), int(ny * h)), 8,
                            (0, 255, 0), -1)
             else:
-                if carrying:
-                    mouse.release()
-                    carrying = False
-                disarm()
-                pinch_closed = False
-                dwell_start = 0.0
+                # brief dropouts happen exactly when fingers pinch (they
+                # occlude each other) — keep all state during the grace
+                if time.time() - last_seen > HAND_LOST_GRACE_SEC:
+                    if carrying:
+                        mouse.release()
+                        carrying = False
+                    disarm()
+                    pinch_closed = False
+                    dwell_start = 0.0
 
             write_state(ring)
 
@@ -257,7 +294,7 @@ def main():
                 cv2.putText(frame, hud2, (14, 60),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
             cv2.putText(frame,
-                        "hold still 2s = arm | 3 flicks = open | close 2s = pick | ESC = quit",
+                        "pinch 2x = open | hold still 2s + close hand 2s = pick | ESC = quit",
                         (14, h - 14), cv2.FONT_HERSHEY_SIMPLEX, 0.45,
                         (255, 255, 255), 1)
             cv2.imshow("Gesture Mouse (ESC to quit)", frame)

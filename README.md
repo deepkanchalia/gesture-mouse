@@ -10,16 +10,14 @@ Made by Deepk Anchlia · Rethink Systems.
 ## Gestures
 
 - **Move your hand** → cursor follows (anchored to your knuckle)
-- **Hold still on a target ~2s** → ARMED (cursor locks onto the target)
-- While armed:
-  - **Flick index + thumb 3 times** → OPEN it (double-click)
-  - **Close your hand and hold ~2s** → PICK UP · **open your hand** → DROP
-- **Move away** → disarms, back to normal tracking
+- **Point + pinch twice** (index + thumb) → OPEN it (double-click)
+- **Hold still on a target ~2s**, then **close your hand ~2s** → PICK UP ·
+  **open your hand** → DROP
 - **Hand out of frame** → cursor freezes where it is
 - **ESC / q** (in the camera window) → quit
 
-Arming first means nothing is ever clicked by accident — the cursor is
-frozen on the target while you gesture, so taps can't drift off the icon.
+The cursor freezes the moment a pinch starts, so the double-pinch click
+lands exactly where you pointed.
 
 A colored ring follows the cursor so you always know the state:
 green = tracking · orange = armed / holding · red = carrying / click ·
