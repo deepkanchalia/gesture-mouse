@@ -1,7 +1,7 @@
 #!/bin/bash
 # Gesture Mouse installer — macOS only.
 # Finds Python 3.11/3.12, creates the venv, installs deps.
-set -e
+set -euo pipefail
 
 if [ "$(uname)" != "Darwin" ]; then
     echo "ERROR: Gesture Mouse is macOS-only (it moves the Mac cursor via Quartz)."

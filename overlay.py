@@ -12,7 +12,7 @@ It reads the current state from the .state file main.py writes, and the
 cursor position straight from the OS, 60x a second.
 """
 
-import objc  # noqa: F401  (pyobjc core, pulled in by pyautogui install)
+import objc  # noqa: F401  (pyobjc core, from pyobjc-framework-Cocoa)
 from AppKit import (NSApplication, NSWindow, NSColor, NSBezierPath,
                     NSView, NSTimer, NSApp, NSBackingStoreBuffered,
                     NSWindowStyleMaskBorderless, NSScreen)

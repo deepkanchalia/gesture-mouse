@@ -60,8 +60,11 @@ def write_state(ch, _last=[""]):
         return
     _last[0] = ch
     try:
-        with open(STATE_FILE, "w") as f:
+        # write-then-rename so the overlay never reads a half-written file
+        tmp = STATE_FILE + ".tmp"
+        with open(tmp, "w") as f:
             f.write(ch)
+        os.replace(tmp, STATE_FILE)
     except OSError:
         pass
 
@@ -115,11 +118,21 @@ def main():
         armed = False
         tap_times = []
 
+    bad_frames = 0
     try:
         while True:
             ok, frame = cap.read()
             if not ok:
+                # Camera unplugged / hijacked: don't spin at 100% CPU forever.
+                bad_frames += 1
+                if bad_frames > 90:      # ~3s of nothing
+                    print("\nERROR: lost the camera. If an iPhone appeared "
+                          "instead of your webcam, turn off Continuity "
+                          "Camera (see README) and re-run.")
+                    break
+                time.sleep(0.03)
                 continue
+            bad_frames = 0
             frame = cv2.flip(frame, 1)
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             hand, mp_result = tracker.process(rgb)
